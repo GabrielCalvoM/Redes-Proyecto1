@@ -1,16 +1,16 @@
 <circuit version="1.1.0-SR1" rev="2005" stepSize="1000000" stepsPS="1000000" NLsteps="100000" reaStep="1000000" animate="1" >
 
 <item itemtype="Subcircuit" CircId="Uno-1" mainComp="false" Show_id="true" Show_Val="false" Pos="-428,44" rotation="90" hflip="1" vflip="1" label="Uno-1" idLabPos="10.7503,-23.7068" labelrot="0" valLabPos="-16,20" valLabRot="0" Logic_Symbol="false">
-<mainCompProps MainCompId="mega328-109" Frequency="16 MHz" Program="../../../../../../AppData/Local/arduino/sketches/98782A26FDBEB0807BC599D0EEB86728/Uno.ino.hex" Auto_Load="false" saveEepr="true" MainMcu="false" SerialMon="-1" />
+<mainCompProps MainCompId="mega328-109" Frequency="16 MHz" Program="Receptor Arduino/Uno/build/arduino.avr.uno/Uno.ino.hex" Auto_Load="false" saveEepr="true" MainMcu="false" SerialMon="-1" />
 </item>
 
 <item itemtype="Subcircuit" CircId="Nano-2" mainComp="false" Show_id="true" Show_Val="false" Pos="-232,-176" rotation="-90" hflip="1" vflip="1" label="Nano-2" idLabPos="0,-20" labelrot="0" valLabPos="-16,20" valLabRot="0">
-<mainCompProps MainCompId="m328 TQFP-269" Frequency="16 MHz" Program="../../../../../../AppData/Local/arduino/sketches/3FB6CA9FB39CC6101E04A450F79F44F4/Nano.ino.hex" Auto_Load="false" saveEepr="true" MainMcu="true" SerialMon="-1" />
+<mainCompProps MainCompId="m328 TQFP-269" Frequency="16 MHz" Program="Emisor Arduino/Nano/build/arduino.avr.nano/Nano.ino.hex" Auto_Load="false" saveEepr="true" MainMcu="true" SerialMon="-1" />
 </item>
 
-<item itemtype="SerialPort" CircId="SerialPort-23" mainComp="false" Show_id="false" Show_Val="false" Pos="-156,52" rotation="0" hflip="1" vflip="1" label="SerialPort-23" idLabPos="-20,-32" labelrot="0" valLabPos="-16,20" valLabRot="0" Auto="false" Port="COM3" Baudrate="9600 _Bd" DataBits="8 _bits" StopBits="1 _bits" SerialMon="true" />
+<item itemtype="SerialPort" CircId="SerialPort-23" mainComp="false" Show_id="false" Show_Val="false" Pos="-156,52" rotation="0" hflip="1" vflip="1" label="SerialPort-23" idLabPos="-20,-32" labelrot="0" valLabPos="-16,20" valLabRot="0" Auto="false" Port="COM3" Baudrate="9600 _Bd" DataBits="8 _bits" StopBits="1 _bits" SerialMon="false" />
 
-<item itemtype="SerialPort" CircId="SerialPort-29" mainComp="false" Show_id="false" Show_Val="false" Pos="-340,-44" rotation="0" hflip="-1" vflip="1" label="SerialPort-29" idLabPos="-20,-32" labelrot="0" valLabPos="-16,20" valLabRot="0" Auto="false" Port="COM5" Baudrate="9600 _Bd" DataBits="8 _bits" StopBits="1 _bits" SerialMon="true" />
+<item itemtype="SerialPort" CircId="SerialPort-29" mainComp="false" Show_id="false" Show_Val="false" Pos="-340,-44" rotation="0" hflip="-1" vflip="1" label="SerialPort-29" idLabPos="-20,-32" labelrot="0" valLabPos="-16,20" valLabRot="0" Auto="false" Port="COM5" Baudrate="9600 _Bd" DataBits="8 _bits" StopBits="1 _bits" SerialMon="false" />
 
 <item itemtype="Connector" uid="Connector-123" startpinid="Uno-1-GND2" endpinid="Nano-2-GND0" pointList="-372,84,-372,4,-236,4,-236,-76" />
 

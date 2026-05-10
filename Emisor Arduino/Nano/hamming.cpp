@@ -1,8 +1,16 @@
 #include "hamming.h"
+
 #include <math.h>
 
+uint16_t matrix[4] = {
+  0b0000000111110000,
+  0b0001111000010000,
+  0b0110011001100000,
+  0b1010101010100000
+};
+
 uint16_t generarHamming(uint8_t bits) {
-  uint16_t hamming = 0, extended_bits = bits, bits_mask = 0xF000;
+  uint16_t hamming = 0, extended_bits = bits, bits_mask = 0x8000;
   extended_bits <<= 8;
 
   for (uint8_t i = 0; i < 12; i++) {
@@ -38,7 +46,7 @@ bool verificarHamming(uint16_t hamming) {
 }
 
 uint8_t decodificarHamming(uint16_t hamming) {
-  uint16_t bits = 0, bits_mask = 0xF000;
+  uint16_t bits = 0, bits_mask = 0x8000;
 
   for (uint8_t i = 0; i < 12; i++) {
     double exp = log((double) i + 1) / log(2.0);
