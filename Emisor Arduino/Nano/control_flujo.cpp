@@ -28,8 +28,11 @@ void ControladorFlujo::guardarConfig() {
   uint8_t ventanas = buffer[1] & 0x30 >> 4;
   config.ventanas = ventanas == 0 ? 3 : ventanas == 1 ? 4 : 5;
   
-  uint8_t velocidad = buffer[1] & 0x0F;
+  uint8_t velocidad = buffer[1] & 0x0E;
   config.velocidad = velocidad == 0 ? 4800 : velocidad == 1 ? 9600 : 19200;
+
+  uint8_t hamming = buffer[1] & 1;
+  config.hamming = hamming == 1;
   
   config.secuencias = buffer[2];
   config.secuencias <<= 8;

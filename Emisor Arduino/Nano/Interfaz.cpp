@@ -8,6 +8,7 @@ void Interfaz::establecerConexion() {
   UnoSerial.end();
   UnoSerial.begin(controlador->config.velocidad);
   UnoSerial.setTimeout(controlador->config.calcularTimeOut());
+  hammingActivo = controlador->config.hamming;
 }
 
 void Interfaz::enviarTrama(uint8_t *buffer, uint16_t size) {
@@ -28,7 +29,6 @@ bool Interfaz::recibirTrama(uint8_t *buffer) {
     size_t readed_bytes = UnoSerial.readBytes((uint8_t*)&hamming, 2);
     
     if (readed_bytes != 2) return false;
-    if (!verificarHamming(hamming)) return false;
 
     buffer[i] = decodificarHamming(hamming);  
   }

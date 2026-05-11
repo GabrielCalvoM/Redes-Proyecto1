@@ -1,5 +1,6 @@
 #include "hamming.h"
 
+#include <Arduino.h>
 #include <math.h>
 
 uint16_t matrix[4] = {
@@ -9,7 +10,11 @@ uint16_t matrix[4] = {
   0b1010101010100000
 };
 
+bool hammingActivo = true;
+
 uint16_t generarHamming(uint8_t bits) {
+  if (!hammingActivo) return (uint16_t)bits;
+  
   uint16_t hamming = 0, extended_bits = bits, bits_mask = 0x8000;
   extended_bits <<= 8;
 
@@ -34,18 +39,30 @@ uint16_t generarHamming(uint8_t bits) {
   return extended_bits;
 }
 
-bool verificarHamming(uint16_t hamming) {
-  uint16_t res = 0;
+void verificarHamming(uint16_t &hamming) {
+  uint8_t pos = 0;
 
   for (uint8_t i = 0; i < 4; i++) {
     uint16_t temp = matrix[i] & hamming;
-    res ^= temp;
+    uint8_t res = 0;
+    pos <<= 1;
+
+    for (uint16_t b = 0; b < 12; b++) {
+      res ^= (temp >> (15 - b)) & 1;
+    }
+
+    pos |= res;
   }
 
-  return res == 0;
+  if (pos == 0) return;
+
+  hamming ^= (uint16_t)1 << (16 - pos);
 }
 
 uint8_t decodificarHamming(uint16_t hamming) {
+  if (!hammingActivo) return (uint8_t)hamming;
+
+  verificarHamming(hamming);
   uint16_t bits = 0, bits_mask = 0x8000;
 
   for (uint8_t i = 0; i < 12; i++) {
