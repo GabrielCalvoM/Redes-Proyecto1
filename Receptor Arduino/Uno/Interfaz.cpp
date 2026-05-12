@@ -26,6 +26,7 @@ bool Interfaz::recibirTrama(uint8_t *buffer) {
   if (readed_bytes != 2) return false;
   
   buffer[0] = decodificarHamming(hamming);
+  Serial.write(buffer[0]);
   uint16_t size = (buffer[0] & 0x03) == 0 ? controlador->conexion_size : controlador->datos_size;
 
   for (uint16_t i = 1; i < size; i++) {
@@ -34,6 +35,7 @@ bool Interfaz::recibirTrama(uint8_t *buffer) {
     if (readed_bytes != 2) return false;
     
     buffer[i] = decodificarHamming(hamming);
+    Serial.write(buffer[i]);
   }
 
   return true;

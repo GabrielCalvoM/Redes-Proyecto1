@@ -12,31 +12,41 @@ uint16_t matrix[4] = {
 
 bool hammingActivo = false;
 
+bool esPot2(uint8_t n) {
+  return (n > 0) && ((n & (n - 1)) == 0);
+}
+
 uint16_t generarHamming(uint8_t bits) {
   if (!hammingActivo) return (uint16_t)bits;
   
-  uint16_t hamming = 0, extended_bits = bits, bits_mask = 0x8000;
-  extended_bits <<= 8;
+  uint16_t hamming = 0, bits_mask = 0x8000;
+  uint8_t data_cursor = 0;
 
   for (uint8_t i = 0; i < 12; i++) {
-    double exp = log((double) i + 1) / log(2.0);
+    uint8_t pos = i + 1;
 
-    if (exp - trunc(exp) != 0.0) hamming |= extended_bits & (bits_mask >> i + 1);
+    if (!esPot2(pos)) {
+      bool bit = (bits >> data_cursor) & 1;
+
+      if (bit) hamming |= bits_mask >> i;
+      
+      data_cursor++;
+    }
   }
 
   for (uint8_t i = 0; i < 4; i++) {
-    uint16_t valuated_bits = (extended_bits & matrix[3 - i]) >> 4;
+    uint16_t valuated_bits = (hamming & matrix[3 - i]) >> 4;
     bool odd = false;
 
-    for (int i = 0; i < 12; i++) {
+    for (int b = 0; b < 12; b++) {
       odd ^= valuated_bits & 1;
-      valuated_bits >> 1;
+      valuated_bits >>= 1;
     }
 
-    if (odd) extended_bits |= bits_mask >> (uint8_t) pow(2, i);
+    if (odd) hamming |= bits_mask >> ((1 << i) - 1);
   }
 
-  return extended_bits;
+  return hamming;
 }
 
 void verificarHamming(uint16_t &hamming) {
@@ -63,17 +73,20 @@ uint8_t decodificarHamming(uint16_t hamming) {
   if (!hammingActivo) return (uint8_t)hamming;
 
   verificarHamming(hamming);
-  uint16_t bits = 0, bits_mask = 0x8000;
+  uint8_t bits = 0, bits_mask = 0x80;
+  uint16_t data_cursor = 7;
 
   for (uint8_t i = 0; i < 12; i++) {
-    double exp = log((double) i + 1) / log(2.0);
+    uint8_t pos = i + 1;
 
-    if (exp - trunc(exp) != 0.0) {
-      bits |= hamming & bits_mask;
-      bits_mask >>= 1;
+    if (!esPot2(pos)) {
+      bool bit = (hamming >> (15 - i)) & 1;
+
+      if (bit) bits |= bits_mask >> data_cursor;
+
+      data_cursor--;
     }
-    else hamming <<= 1;
   }
 
-  return (uint8_t) bits >> 8;
+  return bits;
 }

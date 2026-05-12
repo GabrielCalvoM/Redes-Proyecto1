@@ -8,7 +8,7 @@ struct Config {
   uint16_t payload    = 100;
   uint8_t  ventanas   = 3;
   uint16_t velocidad  = 9600;
-  bool hamming = false;
+  bool hamming = true;
   uint16_t secuencias = 0;
 };
 
