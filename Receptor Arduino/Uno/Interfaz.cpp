@@ -13,11 +13,7 @@ void Interfaz::establecerConexion() {
 void Interfaz::enviarTrama(uint8_t *buffer) {
   for (uint8_t i = 0; i < controlador->response_size; i++) {
     uint16_t chain = generarHamming(buffer[i]);
-    uint8_t bytes[2];
-    bytes[0] = (uint8_t) chain;
-    bytes[1] = (uint8_t) chain >> 8;
-
-    NanoSerial.write(bytes, 2);
+    NanoSerial.write((uint8_t*)chain, 2);
   }
 }
 
@@ -30,9 +26,9 @@ bool Interfaz::recibirTrama(uint8_t *buffer) {
   if (readed_bytes != 2) return false;
   
   buffer[0] = decodificarHamming(hamming);
-  uint16_t size = buffer[0] & 0x03 == 0 ? controlador->conexion_size : controlador->datos_size;
+  uint16_t size = (buffer[0] & 0x03) == 0 ? controlador->conexion_size : controlador->datos_size;
 
-  for (uint16_t i = 1; Serial.available() && i < size; i++) {
+  for (uint16_t i = 1; i < size; i++) {
     size_t readed_bytes = NanoSerial.readBytes((uint8_t*)&hamming, 2);
     
     if (readed_bytes != 2) return false;

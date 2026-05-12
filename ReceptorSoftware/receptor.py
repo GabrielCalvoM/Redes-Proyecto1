@@ -6,7 +6,7 @@ if __name__ == "__main__":
     sleep(2)
 
     while True:
-        linea = ser.read(2).decode("ascii").strip()
+        linea = ser.read(6)
 
         if linea:
             try:

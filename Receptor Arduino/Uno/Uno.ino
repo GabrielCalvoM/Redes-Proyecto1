@@ -5,7 +5,7 @@
 
 // SoftwareSerial NanoSerial(RX, TX);
 // long speed = 9600;
-// const size_t size = 2;
+// const size_t size = 6;
 // char buffer[size] = {0};
 // char ter = '\0';
 

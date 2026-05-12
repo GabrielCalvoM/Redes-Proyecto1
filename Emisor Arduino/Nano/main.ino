@@ -8,7 +8,6 @@ void setup() {
   interfaz.controlador = &controlador;
   controlador.interfaz = &interfaz;
 
-  controlador.config.velocidad = 9600;
   controlador.inicializar();
 }
 

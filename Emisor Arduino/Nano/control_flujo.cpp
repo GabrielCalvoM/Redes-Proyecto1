@@ -44,7 +44,7 @@ void ControladorFlujo::enviarTrama() {
 
   Serial.readBytes(buffer, datos_size);
 
-  if (buffer[0] & 0x03 == 0) {
+  if ((buffer[0] & 0x03) == 0) {
     guardarConfig();
     connected = false;
   }
@@ -55,7 +55,7 @@ void ControladorFlujo::enviarTrama() {
 }
 
 void ControladorFlujo::recibirTrama() {
-  if (connected && tramas < config.ventanas && secuencia < config.secuencias) return;
+  if (tramas < config.ventanas && secuencia <= config.secuencias) return;
 
   tramas = 0;
   bool res = interfaz->recibirTrama(buffer);

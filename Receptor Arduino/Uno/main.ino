@@ -8,7 +8,7 @@ void setup() {
   interfaz.controlador = &controlador;
   controlador.interfaz = &interfaz;
 
-  Serial.begin(9600);
+  controlador.inicializar();
 }
 
 void loop() {

@@ -10,7 +10,7 @@ uint16_t matrix[4] = {
   0b1010101010100000
 };
 
-bool hammingActivo = true;
+bool hammingActivo = false;
 
 uint16_t generarHamming(uint8_t bits) {
   if (!hammingActivo) return (uint16_t)bits;

@@ -36,7 +36,7 @@ void ControladorFlujo::guardarConfig() {
 void ControladorFlujo::enviarTrama() {
   if (!Serial.available()) return;
 
-  Serial.readBytes(buffer, conexion_size);
+  Serial.readBytes(buffer, response_size);
   interfaz->enviarTrama(buffer);
 
   if (!connected) {
@@ -55,5 +55,6 @@ void ControladorFlujo::recibirTrama() {
     connected = false;
   }
 
-  Serial.write(buffer, response_size);
+  uint16_t size = (buffer[0] & 0x03) == 0 ? conexion_size : datos_size;
+  Serial.write(buffer, size);
 }

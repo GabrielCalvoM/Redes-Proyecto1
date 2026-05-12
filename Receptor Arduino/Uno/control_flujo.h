@@ -5,9 +5,9 @@
 class Interfaz;
 
 struct Config {
-  uint16_t payload    = 0;
-  uint8_t  ventanas   = 0;
-  uint16_t velocidad  = 0;
+  uint16_t payload    = 100;
+  uint8_t  ventanas   = 3;
+  uint16_t velocidad  = 9600;
   bool hamming = false;
   uint16_t secuencias = 0;
 };
