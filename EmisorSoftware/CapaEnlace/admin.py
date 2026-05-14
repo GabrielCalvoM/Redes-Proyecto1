@@ -2,9 +2,18 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from typing import Deque, Iterable
+from typing import Deque, Iterable, Protocol, runtime_checkable
 
 from .constructor import ConstructorTramas, FrameType
+
+
+@runtime_checkable
+class PaqueteBuffer(Protocol):
+    def dequeue(self):
+        ...
+
+    def __len__(self) -> int:
+        ...
 
 
 @dataclass
@@ -42,24 +51,8 @@ class AdministradorTramas:
         if sequence_count is not None:
             self.session.sequence_count = sequence_count
 
-    def split_payload(self, payload: bytes) -> list[bytes]:
-        payload = bytes(payload)
-        if not payload:
-            return [b""]
-        chunk_size = self.session.payload_size
-        return [payload[index : index + chunk_size] for index in range(0, len(payload), chunk_size)]
-
-    def split_packets_for_burst(self, packets: Iterable[bytes]) -> list[bytes]:
-        chunks: list[bytes] = []
-        for packet in packets:
-            chunks.extend(self.split_payload(bytes(packet)))
-        return chunks
-
-    def prepare_transfer(self, payload: bytes) -> list[bytes]:
-        return self.prepare_transfer_from_packets([bytes(payload)])
-
     def prepare_transfer_from_packets(self, packets: Iterable[bytes]) -> list[bytes]:
-        chunks = self.split_packets_for_burst(packets)
+        chunks = self._normalize_packets(packets)
         self.session.sequence_count = len(chunks) & 0xFF
         connection_frame = self.constructor.build_connection_frame(
             payload_size=self.session.payload_size,
@@ -77,7 +70,7 @@ class AdministradorTramas:
         return [connection_frame] + data_frames
 
     def prepare_bursts_from_packets(self, packets: Iterable[bytes]) -> tuple[bytes, list[list[bytes]]]:
-        chunks = self.split_packets_for_burst(packets)
+        chunks = self._normalize_packets(packets)
         self.session.sequence_count = len(chunks) & 0xFF
 
         connection_frame = self.constructor.build_connection_frame(
@@ -100,11 +93,30 @@ class AdministradorTramas:
         ]
         return connection_frame, bursts
 
-    def load_transfer(self, payload: bytes) -> None:
-        connection_frame, bursts = self.prepare_bursts_from_packets([bytes(payload)])
+    def _normalize_packets(self, packets: Iterable[bytes]) -> list[bytes]:
+        normalized: list[bytes] = []
+        for packet in packets:
+            payload = getattr(packet, "payload", packet)
+            normalized.append(bytes(payload))
+        return normalized
+
+    def load_transfer_from_packets(self, packets: Iterable[bytes]) -> None:
+        connection_frame, bursts = self.prepare_bursts_from_packets(packets)
         self._outgoing_frames = deque([connection_frame])
         self._pending_bursts = deque(bursts)
         self.load_next_burst()
+
+    def load_transfer_from_interface(self, interfaz: PaqueteBuffer) -> None:
+        packets: list[bytes] = []
+        while len(interfaz) > 0:
+            paquete = interfaz.dequeue()
+            if paquete is None:
+                break
+            packets.append(paquete)
+        self.load_transfer_from_packets(packets)
+
+    def load_transfer(self, payload: bytes) -> None:
+        self.load_transfer_from_packets([bytes(payload)])
 
     def load_next_burst(self) -> list[bytes]:
         if not self._pending_bursts:

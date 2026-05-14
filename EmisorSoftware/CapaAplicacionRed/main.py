@@ -1,7 +1,18 @@
+import os
+import sys
+
 from interfaz_usuario import obtener_parametros
 from lector_archivo   import LectorArchivo
 from paquetizador     import Paquetizador
 from interfaz_red_enlace   import InterfazRedEnlace
+
+
+BASE_DIR = os.path.dirname(__file__)
+EMISOR_DIR = os.path.dirname(BASE_DIR)
+if EMISOR_DIR not in sys.path:
+    sys.path.insert(0, EMISOR_DIR)
+
+from CapaEnlace.admin import AdministradorTramas
 
 
 def main():
@@ -33,7 +44,22 @@ def main():
     print(f"  Paquetes en cola: {len(interfaz)}")
     print("=" * 50)
 
-    # Instanciar administrador de tramas...
+    administrador = AdministradorTramas()
+    administrador.configure_session(
+        payload_size=params["payload"],
+        window_size=params["ventana"],
+        speed_bps=params["velocidad"],
+    )
+    administrador.load_transfer_from_interface(interfaz)
+
+    print("\n[main] Tramas construidas por el administrador:")
+    while administrador.has_pending_frames() or administrador.has_pending_bursts():
+        while administrador.has_pending_frames():
+            frame = administrador.next_frame()
+            if frame is not None:
+                print(f"  {frame}")
+        if administrador.has_pending_bursts():
+            administrador.load_next_burst()
 
 
 if __name__ == "__main__":
