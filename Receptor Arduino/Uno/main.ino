@@ -1,5 +1,6 @@
 #include "control_flujo.h"
 #include "Interfaz.h"
+#include "display_LCD.h"
 
 ControladorFlujo controlador;
 Interfaz interfaz;
@@ -15,5 +16,5 @@ void loop() {
   controlador.enviarTrama();
   controlador.recibirTrama();
 
-  delay(50);
+  // delay(50);
 }

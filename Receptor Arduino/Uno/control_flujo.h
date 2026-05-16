@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "display_LCD.h"
 
 class Interfaz;
 
@@ -16,14 +17,16 @@ class ControladorFlujo {
 private:
   bool connected        = false;
   // uint8_t tramas        = 0;
-  // uint16_t secuencia    = 0;
+  uint16_t secuencia    = 0;
+  uint16_t errores      = 0;
   uint8_t buffer[1007]  = {0};
 
 public:
   Interfaz *interfaz = nullptr;
+  DisplayLCD *lcd = nullptr;
   Config config;
 
-  const uint8_t conexion_size = 6;
+  const uint8_t conexion_size = 7;
   uint16_t datos_size   = 0;
   const uint8_t response_size = 5;
 

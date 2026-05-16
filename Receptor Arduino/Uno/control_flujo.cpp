@@ -9,8 +9,9 @@ void ControladorFlujo::inicializar() {
   Serial.begin(config.velocidad);
 
   datos_size = config.payload + 7;
-  // tramas = 0;
-  // secuencia = 0;
+  // tramas    = 0;
+  secuencia = 0;
+  errores   = 0;
 
   interfaz->establecerConexion();
 }
@@ -34,7 +35,7 @@ void ControladorFlujo::guardarConfig() {
 }
 
 void ControladorFlujo::enviarTrama() {
-  if (!Serial.available()) return;
+  if (Serial.available() < 2) return;
 
   Serial.readBytes(buffer, response_size);
   interfaz->enviarTrama(buffer);
@@ -43,6 +44,24 @@ void ControladorFlujo::enviarTrama() {
     delay(30);
     inicializar();
     connected = true;
+    lcd->clear();
+  }
+
+  bool is_error = false;
+
+  if (buffer[0] & 0x03 == 3) {
+    secuencia -= ((uint8_t) secuencia % 256) - buffer[1];
+    errores++;
+    is_error = true;
+  }
+
+  if (secuencia < config.secuencias) {
+    lcd->setSecuencias(secuencia, config.secuencias);
+    lcd->setError(is_error);
+  }
+  else {
+    lcd->clear();
+    lcd->finalizar(errores, config.secuencias);
   }
 }
 
@@ -51,10 +70,22 @@ void ControladorFlujo::recibirTrama() {
 
   if (!res) return;
   if (buffer[0] == 0) {
+    lcd->inicializar();
     guardarConfig();
     connected = false;
   }
 
   uint16_t size = (buffer[0] & 0x03) == 0 ? conexion_size : datos_size;
-  Serial.write(buffer, size);
+  uint16_t i = 0;
+
+  while (i < size) {
+    uint8_t size_to_write = min(size - i, SERIAL_RX_BUFFER_SIZE);
+
+    while (Serial.availableForWrite() < size_to_write);
+    
+    uint8_t written = Serial.write(buffer + i, size_to_write);
+    i += written;
+  }
+  
+  if ((buffer[0] & 0x03) == 1) secuencia++;
 }

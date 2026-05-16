@@ -2,11 +2,6 @@
 
 #include <stdint.h>
 
-union HammingChaing {
-  uint16_t chain;
-
-};
-
 extern uint16_t matrix[4];
 extern bool hammingActivo;
 

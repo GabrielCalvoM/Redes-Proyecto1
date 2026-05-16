@@ -1,33 +1,24 @@
 // #include <SoftwareSerial.h>
 
-// #define RX 10
-// #define TX 11
+// #include "display_LCD.h"
 
-// SoftwareSerial NanoSerial(RX, TX);
-// long speed = 9600;
-// const size_t size = 6;
-// char buffer[size] = {0};
-// char ter = '\0';
+// DisplayLCD lcd;
 
 // void setup() {
-//   Serial.begin(speed);
-
-//   while (!Serial) {
-//     ; // wait for serial port to connect. Needed for native USB port only
-//   }
-
-//   NanoSerial.begin(speed);
+//   lcd.inicializar();
 // }
 
 // void loop() {
-//   if (Serial.available()) {
-//     Serial.readBytes(buffer, size);
-//     NanoSerial.write(buffer, size);
+//   lcd.inicializar();
+//   delay(500);
+
+//   int size = 32;
+//   for (int i = 0; i < size; i++) {
+//     lcd.setSecuencias(i, size);
+//     lcd.setError(false);
+//     delay(300);
 //   }
-//   if (NanoSerial.available()) {
-//     NanoSerial.readBytes(buffer, size);
-//     Serial.write(buffer, size);
-//   }
-  
-//   delay(200);
+
+//   lcd.finalizar(3, size);
+//   delay(3000);
 // }

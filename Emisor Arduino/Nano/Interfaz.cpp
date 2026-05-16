@@ -14,9 +14,10 @@ void Interfaz::establecerConexion() {
 void Interfaz::enviarTrama(uint8_t *buffer, uint16_t size) {
   for (uint16_t i = 0; i < size; i++) {
     uint16_t chain = generarHamming(buffer[i]);
+    
+    while (UnoSerial.availableForWrite() < 2);
+
     UnoSerial.write((uint8_t*)&chain, 2);
-    Serial.write(0xFF);
-    Serial.write((uint8_t*)&chain, 2);
   }
 }
 

@@ -42,15 +42,28 @@ void ControladorFlujo::guardarConfig() {
 void ControladorFlujo::enviarTrama() {
   if (tramas >= config.ventanas || !Serial.available()) return;
 
-  Serial.readBytes(buffer, datos_size);
+  Serial.readBytes(buffer, conexion_size);
 
   if ((buffer[0] & 0x03) == 0) {
     guardarConfig();
     connected = false;
+    interfaz->enviarTrama(buffer, conexion_size);
+    secuencia++;
+    return;
   }
 
-  uint16_t size = connected ? datos_size : conexion_size;
-  interfaz->enviarTrama(buffer, size);
+  uint16_t i = conexion_size;
+  
+  while (i < datos_size) {
+    uint8_t size_to_read = min(datos_size - i, SERIAL_RX_BUFFER_SIZE);
+    uint8_t readed = Serial.readBytes(buffer + i, size_to_read);
+
+    if (readed == 0) return;
+
+    i += readed;
+  }
+
+  interfaz->enviarTrama(buffer, datos_size);
   secuencia++;
 }
 
