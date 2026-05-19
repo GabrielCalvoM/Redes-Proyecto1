@@ -68,6 +68,19 @@ def solicitar_ventana() -> int:
             return TAMANOS_VENTANA[int(opcion)]
         print("  [!] Opción inválida. Ingrese 1, 2 o 3.")
 
+def solicitar_hamming() -> bool:
+    """Pregunta al usuario si desea utilizar hamming"""
+    print("\n  ¿Desea utilizar código de Hamming para corrección de errores?")
+    print("    [1] Sí")
+    print("    [2] No")
+    while True:
+        opcion = input("  Seleccione una opción [1-2]: ").strip()
+        if opcion == "1":
+            return True
+        elif opcion == "2":
+            return False
+        print("  [!] Opción inválida. Ingrese 1 o 2.")
+
 
 def obtener_parametros() -> dict:
     """
@@ -89,12 +102,14 @@ def obtener_parametros() -> dict:
     velocidad = solicitar_velocidad()
     payload   = solicitar_payload()
     ventana   = solicitar_ventana()
+    hamming = solicitar_hamming()
 
     params = {
         "path":      path,
         "velocidad": velocidad,
         "payload":   payload,
         "ventana":   ventana,
+        "hamming":   hamming,
     }
 
     print("\n  --- Parámetros seleccionados ---")
@@ -102,6 +117,7 @@ def obtener_parametros() -> dict:
     print(f"  Velocidad : {velocidad} bps")
     print(f"  Payload   : {payload} B/paquete")
     print(f"  Ventana   : {ventana} tramas/ráfaga")
+    print(f"  Hamming   : {'Sí' if hamming else 'No'}")
     print("=" * 50)
 
     return params

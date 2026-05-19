@@ -40,6 +40,7 @@ def main():
     print(f"  Velocidad (S)   : {params['velocidad']} bps")
     print(f"  Payload (P)     : {params['payload']} B/paquete")
     print(f"  Ventana (N)     : {params['ventana']} tramas/ráfaga")
+    print(f"  Hamming   : {'Sí' if params['hamming'] else 'No'}")
     print(f"  Total paquetes  : {paquetizador.calcular_total()}")
     print(f"  Paquetes en cola: {len(interfaz)}")
     print("=" * 50)
@@ -49,6 +50,7 @@ def main():
         payload_size=params["payload"],
         window_size=params["ventana"],
         speed_bps=params["velocidad"],
+        hamming_enabled=params["hamming"],
     )
     administrador.load_transfer_from_interface(interfaz)
 
