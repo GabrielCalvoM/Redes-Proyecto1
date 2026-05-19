@@ -50,11 +50,14 @@ void ControladorFlujo::recibirTrama() {
   bool res = interfaz->recibirTrama(buffer);
 
   if (!res) return;
-  if (buffer[0] == 0) {
+
+  uint8_t type = buffer[0] & 0x03;
+  if (type == 0) {
     guardarConfig();
     connected = false;
   }
 
-  uint16_t size = (buffer[0] & 0x03) == 0 ? conexion_size : datos_size;
+  // The total frame size was populated by Interfaz::recibirTrama into datos_size
+  uint16_t size = datos_size;
   Serial.write(buffer, size);
 }

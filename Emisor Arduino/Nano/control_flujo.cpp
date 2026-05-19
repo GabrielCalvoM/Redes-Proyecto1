@@ -40,36 +40,43 @@ void ControladorFlujo::guardarConfig() {
 }
 
 void ControladorFlujo::enviarTrama() {
-  if (tramas >= config.ventanas || !Serial.available()) return;
+  if (!Serial.available()) return;
 
-  Serial.readBytes(buffer, datos_size);
+  // Read the first byte (Header)
+  buffer[0] = Serial.read();
 
-  if ((buffer[0] & 0x03) == 0) {
+  uint8_t type = buffer[0] & 0x03;
+  uint16_t size = 0;
+
+  if (type == 0) { 
+    // Connection Frame: Total 6 bytes. We read 1, need 5 more.
+    size = conexion_size;
+    Serial.readBytes(&buffer[1], size - 1);
     guardarConfig();
     connected = false;
+  } else if (type == 1) { 
+    // Data Frame: We need to read Sequence (1) and Size (2) to know payload length.
+    Serial.readBytes(&buffer[1], 3);
+    uint16_t payload_length = ((uint16_t)buffer[2] << 8) | buffer[3];
+    size = 7 + payload_length;
+    // Read the remaining bytes (payload + checksum(2) + EOF(1))
+    Serial.readBytes(&buffer[4], payload_length + 3);
+  } else {
+    return; // Ignore other frames
   }
 
-  uint16_t size = connected ? datos_size : conexion_size;
   interfaz->enviarTrama(buffer, size);
   secuencia++;
 }
 
 void ControladorFlujo::recibirTrama() {
-  if (tramas < config.ventanas && secuencia <= config.secuencias) return;
-
-  tramas = 0;
+  // Simplificamos: ignorar ventanas/secuencias por ahora, solo pasar respuestas al PC
   bool res = interfaz->recibirTrama(buffer);
+  if (!res) return;
 
-  if (!res) {
-    Serial.write(0);
-    return;
-  }
-
+  // Assuming response from Receptor is ACK(10) or NACK(11) which are 5 bytes long.
   Serial.write(buffer, response_size);
 
-  if (buffer[0] & 0x03 == 3) {
-    secuencia -= ((uint8_t) secuencia % 256) - buffer[1];
-  }
   if (!connected) {
     delay(30);
     inicializar();

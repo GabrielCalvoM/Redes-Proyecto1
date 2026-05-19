@@ -145,6 +145,9 @@ class AdministradorTramas:
     def frame_count(self, payload: bytes) -> int:
         return len(self.prepare_transfer(payload))
 
+    def prepare_transfer(self, payload: bytes) -> list[bytes]:
+        return self.prepare_transfer_from_packets([bytes(payload)])
+
     def parse_control_frame(self, frame: bytes) -> dict:
         frame = bytes(frame)
         if len(frame) != 5:
