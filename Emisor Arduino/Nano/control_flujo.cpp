@@ -22,21 +22,19 @@ void ControladorFlujo::inicializar() {
 }
 
 void ControladorFlujo::guardarConfig() {
-  uint8_t payload = buffer[1] & 0xC0 >> 6;
+  uint8_t payload = (buffer[1] & 0xC0) >> 6;
   config.payload = payload == 0 ? 100 : payload == 1 ? 400 : 1000;
-  
-  uint8_t ventanas = buffer[1] & 0x30 >> 4;
+
+  uint8_t ventanas = (buffer[1] & 0x30) >> 4;
   config.ventanas = ventanas == 0 ? 3 : ventanas == 1 ? 4 : 5;
-  
-  uint8_t velocidad = buffer[1] & 0x0E;
+
+  uint8_t velocidad = (buffer[1] & 0x0E) >> 1;
   config.velocidad = velocidad == 0 ? 4800 : velocidad == 1 ? 9600 : 19200;
 
   uint8_t hamming = buffer[1] & 1;
   config.hamming = hamming == 1;
-  
+
   config.secuencias = buffer[2];
-  config.secuencias <<= 8;
-  config.secuencias |= buffer[3];
 }
 
 void ControladorFlujo::enviarTrama() {

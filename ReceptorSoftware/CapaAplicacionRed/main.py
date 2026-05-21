@@ -1,64 +1,55 @@
+import os
+import sys
+
 from interfaz_red_enlace import InterfazRedEnlace
 from constructor_archivo import ConstructorArchivo
-from interfaz_usuario  import (
+from interfaz_usuario import (
     mostrar_escuchando,
     mostrar_archivo_recibido,
     solicitar_destino,
     guardar_archivo,
 )
+from paquete import Paquete
+
+
+BASE_DIR = os.path.dirname(__file__)
+RECEPTOR_DIR = os.path.dirname(BASE_DIR)
+if RECEPTOR_DIR not in sys.path:
+    sys.path.insert(0, RECEPTOR_DIR)
+
+from CapaEnlace.admin      import AdministradorTramas
+from CapaEnlace.serial_com import PuertoSerialReceptor
 
 
 def main():
-    # 1. Crear la interfaz entre capas (la capa de enlace la recibe por referencia)
+    puerto_serial = sys.argv[1] if len(sys.argv) > 1 else "COM4"
+
     interfaz = InterfazRedEnlace()
+    admin = AdministradorTramas()
 
-    # 2. Avisar al usuario que estamos escuchando
     mostrar_escuchando()
+    print(f"  Puerto serial : {puerto_serial}")
 
-    # 3. Constructor: bloquea hasta que la capa de enlace llame notificar_fin_recepcion()
+    # --- Capa Física / Enlace: recibe tramas y puebla la interfaz ---
+    puerto = PuertoSerialReceptor(puerto_serial)
+    puerto.conectar()
+    try:
+        puerto.escuchar(
+            admin,
+            on_payload=lambda payload: interfaz.enqueue(Paquete(payload=payload)),
+            on_done=interfaz.notificar_fin_recepcion,
+        )
+    finally:
+        puerto.cerrar()
+
+    # --- Capa de Red / Aplicación: reconstruye el archivo ---
     constructor = ConstructorArchivo(interfaz)
     datos = constructor.reconstruir()
 
-    # 4. Notificar al usuario que el archivo llegó
     mostrar_archivo_recibido(len(datos))
-
-    # 5. Preguntar destino y guardar
     directorio, nombre = solicitar_destino()
     guardar_archivo(datos, directorio, nombre)
-
-    return interfaz   # la capa de enlace ya tiene su referencia; esto es opcional
 
 
 if __name__ == "__main__":
-    # ── Demo sin capa de enlace real ──────────────────────────────────
-    # Simula la capa inferior encolando paquetes y llamando notificar_fin_recepcion().
-    import threading
-    from paquete import Paquete
-
-    interfaz = InterfazRedEnlace()
-
-    def simular_capa_enlace():
-        import time
-        time.sleep(1)   # simula latencia de red
-        contenido = (
-            b"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla luctus lacus metus,\n"
-            b"in faucibus nulla viverra vitae. Nam ex magna, consequat sed justo ac, accumsan\n"
-            b"blandit ipsum. Duis vulputate ante nec rhoncus condimentum. Pellentesque vulputate\n"
-            b"vitae sapien sed dictum. Ut non ante bibendum, iaculis orci quis, pellentesque quam.\n"
-        )
-        P = 20
-        for i in range(0, len(contenido), P):
-            interfaz.enqueue(Paquete(payload=contenido[i:i+P]))
-        print("[SimuladorEnlace] Paquetes encolados. Notificando...")
-        interfaz.notificar_fin_recepcion()
-
-    hilo = threading.Thread(target=simular_capa_enlace, daemon=True)
-    hilo.start()
-
-    # Capa de aplicación
-    mostrar_escuchando()
-    constructor = ConstructorArchivo(interfaz)
-    datos = constructor.reconstruir()
-    mostrar_archivo_recibido(len(datos))
-    directorio, nombre = solicitar_destino()
-    guardar_archivo(datos, directorio, nombre)
+    main()
