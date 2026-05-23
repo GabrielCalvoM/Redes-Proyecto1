@@ -3,10 +3,12 @@
 
 ControladorFlujo controlador;
 Interfaz interfaz;
+DisplayLCD lcd;
 
 void setup() {
   interfaz.controlador = &controlador;
   controlador.interfaz = &interfaz;
+  controlador.lcd = &lcd;
 
   controlador.inicializar();
 }

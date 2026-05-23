@@ -1,2 +1,5 @@
 /[Bb]in/
 /[Bb]uild/
+
+__pycache__/
+dist/

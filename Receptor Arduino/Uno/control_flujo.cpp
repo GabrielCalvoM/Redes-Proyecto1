@@ -7,10 +7,12 @@
 void ControladorFlujo::inicializar() {
   Serial.end();
   Serial.begin(config.velocidad);
+  while (!Serial);
 
   datos_size = config.payload + 7;
-  // tramas = 0;
-  // secuencia = 0;
+  // tramas    = 0;
+  secuencia = 0;
+  errores   = 0;
 
   interfaz->establecerConexion();
 }
@@ -41,6 +43,24 @@ void ControladorFlujo::enviarTrama() {
     delay(30);
     inicializar();
     connected = true;
+    lcd->clear();
+  }
+
+  bool is_error = false;
+
+  if (buffer[0] & 0x03 == 3) {
+    secuencia -= ((uint8_t) secuencia % 256) - buffer[1];
+    errores++;
+    is_error = true;
+  }
+
+  if (secuencia < config.secuencias) {
+    lcd->setSecuencias(secuencia, config.secuencias);
+    lcd->setError(is_error);
+  }
+  else {
+    lcd->clear();
+    lcd->finalizar(errores, config.secuencias);
   }
 }
 
@@ -51,8 +71,12 @@ void ControladorFlujo::recibirTrama() {
 
   uint8_t type = buffer[0] & 0x03;
   if (type == 0) {
+    lcd->inicializar();
     guardarConfig();
     connected = false;
+  }
+  if (type == 1) {
+    secuencia++;
   }
 
   // The total frame size was populated by Interfaz::recibirTrama into datos_size

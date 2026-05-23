@@ -7,6 +7,8 @@
 void Interfaz::establecerConexion() {
   NanoSerial.end();
   NanoSerial.begin(controlador->config.velocidad);
+  while (!NanoSerial);
+
   hammingActivo = controlador->config.hamming;
 }
 

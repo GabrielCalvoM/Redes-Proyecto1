@@ -13,6 +13,7 @@ uint64_t Config::calcularTimeOut() {
 void ControladorFlujo::inicializar() {
   Serial.end();
   Serial.begin(config.velocidad);
+  while (!Serial);
 
   datos_size = config.payload + 7;
   tramas = 0;
@@ -62,6 +63,7 @@ void ControladorFlujo::enviarTrama() {
   } else {
     return; // Ignore other frames
   }
+  // Serial.write(16);
 
   interfaz->enviarTrama(buffer, size);
   secuencia++;
