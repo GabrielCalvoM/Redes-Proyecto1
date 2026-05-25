@@ -26,7 +26,7 @@ public:
   Interfaz *interfaz = nullptr;
   Config config;
 
-  const uint8_t conexion_size = 6;
+  const uint8_t conexion_size = 7;
   uint16_t datos_size   = 0;
   const uint8_t response_size = 5;
 
