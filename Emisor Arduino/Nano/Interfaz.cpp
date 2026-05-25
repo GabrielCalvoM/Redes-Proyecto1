@@ -25,6 +25,8 @@ void Interfaz::enviarTrama(uint8_t *buffer, uint16_t size) {
 }
 
 bool Interfaz::recibirTrama(uint8_t *buffer) {
+  if (UnoSerial.available() < 2) return false;
+
   uint16_t hamming = 0;
 
   for (uint8_t i = 0; i < controlador->response_size; i++) {

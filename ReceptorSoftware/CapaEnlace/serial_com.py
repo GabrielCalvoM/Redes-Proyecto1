@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class PuertoSerialReceptor:
-    def __init__(self, port: str, timeout: float = 5.0) -> None:
+    def __init__(self, port: str, timeout: float = 10.0) -> None:
         self._port = port
         self._timeout = timeout
         self._ser: serial.Serial | None = None
@@ -29,15 +29,17 @@ class PuertoSerialReceptor:
         if not first:
             return b""
         frame_type = first[0] & 0x03
-        if frame_type == 0:  # CONNECTION: 6 bytes total
+        if frame_type == 0:                         # CONNECTION: 6 bytes total
             rest = self._ser.read(5)
             return (first + rest) if len(rest) == 5 else b""
-        if frame_type == 1:  # DATA: header(4) + payload + checksum(2) + trailer(1)
-            header = self._ser.read(3)  # seq(1) + size(2)
+        if frame_type == 1:                         # DATA
+            header = self._ser.read(3)              # seq(1) + size(2)
             if len(header) != 3:
                 return b""
             size = int.from_bytes(header[1:3], "big")
-            tail = self._ser.read(size + 3)  # payload + checksum(2) + trailer(1)
+            if size > 1000:
+                return b""
+            tail = self._ser.read(size + 3)         # payload + checksum(2) + trailer(1)
             return (first + header + tail) if len(tail) == size + 3 else b""
         return b""
 
@@ -45,6 +47,11 @@ class PuertoSerialReceptor:
         if self._ser.baudrate != baud:
             self._ser.baudrate = baud
             print(f"[Serial] Velocidad cambiada a {baud} bps")
+
+    def _send_nack(self, admin: AdministradorTramas, seq: int) -> None:
+        self._ser.write(admin.build_nack(seq))
+        self._ser.reset_input_buffer()
+        print(f"[Serial] NACK enviado (seq={seq})")
 
     def escuchar(
         self,
@@ -71,47 +78,53 @@ class PuertoSerialReceptor:
             f"P={parsed['payload_size']}B  N={parsed['window_size']}  "
             f"S={parsed['speed_bps']}bps  seqs={parsed['sequence_count']}"
         )
-
-        # Acknowledge the handshake
-        ack = admin.build_ack(0)
-        self._ser.write(ack)
+        self._ser.write(admin.build_ack(0))
         print("[Serial] ACK de handshake enviado.")
 
-        # Give the Arduino time to reinitialize its serial port.
         sleep(0.5)
         self._cambiar_baud(admin.session.speed_bps)
 
-        # --- Receive data frames ---
-        expected = admin.session.sequence_count
-        received = 0
+        # --- Sliding-window Go-Back-N receive ---
+        expected    = admin.session.sequence_count
+        window_size = admin.session.window_size
+        total       = 0
 
-        while received < expected:
+        while total < expected:
             frame = self._leer_trama()
+
             if not frame:
-                print(
-                    f"[Serial] Timeout esperando trama {received + 1}/{expected}. "
-                    f"Enviando NACK (seq={received})..."
-                )
-                self._ser.write(admin.build_nack(received))
+                print(f"[Serial] Timeout esperando seq={total}.")
+                self._send_nack(admin, total)
                 continue
 
             try:
                 parsed = admin.parse_incoming_frame(frame)
             except ValueError as exc:
-                print(f"[Serial] Checksum inválido: {exc}. Enviando NACK (seq={received})...")
-                self._ser.write(admin.build_nack(received))
+                print(f"[Serial] Checksum inválido: {exc}.")
+                self._send_nack(admin, total)
                 continue
 
             if parsed["type"] != "data":
                 continue
 
+            seq = parsed["sequence"]
+            if seq != total:
+                print(f"[Serial] Secuencia inesperada: recibida {seq}, esperada {total}.")
+                self._send_nack(admin, total)
+                continue
+
             on_payload(parsed["payload"])
-            received += 1
-            self._ser.write(admin.build_ack(parsed["sequence"]))
-            print(
-                f"[Serial] Trama {received}/{expected} ok "
-                f"(seq={parsed['sequence']}, {parsed['size']}B)"
-            )
+            total += 1
+
+            # Send ONE cumulative ACK at the end of each burst or after the last frame.
+            is_burst_end = (total % window_size == 0)
+            is_last      = (total == expected)
+            if is_burst_end or is_last:
+                self._ser.write(admin.build_ack(seq))
+                print(
+                    f"[Serial] ACK enviado (seq={seq}) — "
+                    f"{total}/{expected} trama(s) recibidas"
+                )
 
         print("[Serial] Todas las tramas recibidas.")
         on_done()

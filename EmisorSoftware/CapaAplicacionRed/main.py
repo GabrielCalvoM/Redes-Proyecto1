@@ -57,7 +57,7 @@ def main():
     connection_frame, bursts = administrador.prepare_bursts_from_packets(packets)
 
     # --- Capa Física (serial hacia Arduino) ---
-    puerto = PuertoSerialEmisor(puerto_serial)
+    puerto = PuertoSerialEmisor(puerto_serial, timeout=120.0)
     try:
         puerto.conectar()
         puerto.enviar_transferencia(administrador, connection_frame, bursts)

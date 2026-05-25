@@ -31,7 +31,7 @@ def main():
     print(f"  Puerto serial : {puerto_serial}")
 
     # --- Capa Física / Enlace: recibe tramas y puebla la interfaz ---
-    puerto = PuertoSerialReceptor(puerto_serial)
+    puerto = PuertoSerialReceptor(puerto_serial, timeout=120.0)
     puerto.conectar()
     try:
         puerto.escuchar(
