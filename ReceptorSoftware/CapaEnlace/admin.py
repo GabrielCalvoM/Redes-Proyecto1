@@ -44,7 +44,7 @@ class AdministradorTramas:
 
     def parse_incoming_frame(self, frame: bytes) -> dict:
         frame = bytes(frame)
-        if len(frame) < 6:
+        if len(frame) < 7:
             raise ValueError("Frame too short for receptor")
         if frame[-1] != self.constructor.END_BYTE:
             raise ValueError("Invalid frame terminator")
@@ -59,11 +59,11 @@ class AdministradorTramas:
         raise ValueError("Receiver only accepts CONNECTION/DATA frames")
 
     def _parse_connection_frame(self, frame: bytes) -> dict:
-        if len(frame) != 6:
+        if len(frame) != 7:
             raise ValueError("Invalid connection frame length")
 
-        header = frame[:3]
-        checksum = frame[3:5]
+        header = frame[:4]
+        checksum = frame[4:6]
         if not self.constructor.checksum.verify(header, checksum):
             raise ValueError("Invalid connection checksum")
 
@@ -83,7 +83,7 @@ class AdministradorTramas:
         payload_size = {0: 100, 1: 400, 2: 1000}[payload_code]
         window_size = {0: 3, 1: 4, 2: 5}[window_code]
         speed_bps = {0: 4800, 1: 9600, 2: 19200}[speed_code]
-        sequence_count = frame[2]
+        sequence_count = (frame[2] << 8) | frame[3]
 
         self.configure_session(
             payload_size=payload_size,

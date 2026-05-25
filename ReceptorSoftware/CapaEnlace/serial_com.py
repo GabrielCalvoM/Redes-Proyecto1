@@ -29,9 +29,9 @@ class PuertoSerialReceptor:
         if not first:
             return b""
         frame_type = first[0] & 0x03
-        if frame_type == 0:                         # CONNECTION: 6 bytes total
-            rest = self._ser.read(5)
-            return (first + rest) if len(rest) == 5 else b""
+        if frame_type == 0:                         # CONNECTION: 7 bytes total
+            rest = self._ser.read(6)
+            return (first + rest) if len(rest) == 6 else b""
         if frame_type == 1:                         # DATA
             header = self._ser.read(3)              # seq(1) + size(2)
             if len(header) != 3:
@@ -93,24 +93,25 @@ class PuertoSerialReceptor:
             frame = self._leer_trama()
 
             if not frame:
-                print(f"[Serial] Timeout esperando seq={total}.")
-                self._send_nack(admin, total)
+                print(f"[Serial] Timeout esperando seq={total % 256}.")
+                self._send_nack(admin, total % 256)
                 continue
 
             try:
                 parsed = admin.parse_incoming_frame(frame)
             except ValueError as exc:
                 print(f"[Serial] Checksum inválido: {exc}.")
-                self._send_nack(admin, total)
+                self._send_nack(admin, total % 256)
                 continue
 
             if parsed["type"] != "data":
                 continue
 
             seq = parsed["sequence"]
-            if seq != total:
-                print(f"[Serial] Secuencia inesperada: recibida {seq}, esperada {total}.")
-                self._send_nack(admin, total)
+            expected_seq = total % 256
+            if seq != expected_seq:
+                print(f"[Serial] Secuencia inesperada: recibida {seq}, esperada {expected_seq}.")
+                self._send_nack(admin, expected_seq)
                 continue
 
             on_payload(parsed["payload"])

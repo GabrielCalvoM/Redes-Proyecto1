@@ -61,6 +61,7 @@ class ConstructorTramas:
                 | ((self._encode_window_size(window_size) & 0x03) << 4)
                 | ((self._encode_speed(speed_bps) & 0x07) << 1)
                 | (1 if hamming_enabled else 0),
+                (sequence_count >> 8) & 0xFF,
                 sequence_count & 0xFF,
             ]
         )

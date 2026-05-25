@@ -53,7 +53,7 @@ class AdministradorTramas:
 
     def prepare_transfer_from_packets(self, packets: Iterable[bytes]) -> list[bytes]:
         chunks = self._normalize_packets(packets)
-        self.session.sequence_count = len(chunks) & 0xFF
+        self.session.sequence_count = len(chunks) & 0xFFFF
         connection_frame = self.constructor.build_connection_frame(
             payload_size=self.session.payload_size,
             window_size=self.session.window_size,
@@ -71,7 +71,7 @@ class AdministradorTramas:
 
     def prepare_bursts_from_packets(self, packets: Iterable[bytes]) -> tuple[bytes, list[list[bytes]]]:
         chunks = self._normalize_packets(packets)
-        self.session.sequence_count = len(chunks) & 0xFF
+        self.session.sequence_count = len(chunks) & 0xFFFF
 
         connection_frame = self.constructor.build_connection_frame(
             payload_size=self.session.payload_size,

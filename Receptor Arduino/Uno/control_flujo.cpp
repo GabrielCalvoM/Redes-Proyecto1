@@ -30,7 +30,7 @@ void ControladorFlujo::guardarConfig() {
   uint8_t hamming = buffer[1] & 1;
   config.hamming = hamming == 1;
 
-  config.secuencias = buffer[2];
+  config.secuencias = ((uint16_t)buffer[2] << 8) | buffer[3];
 }
 
 void ControladorFlujo::enviarTrama() {

@@ -95,7 +95,15 @@ class PuertoSerialEmisor:
                 sleep(inter_frame_s)  # let Nano finish forwarding last burst before new frames arrive
             self._ser.reset_input_buffer()
 
+            first_try = True
             while True:
+                if not first_try:
+                    # Drain Nano pipeline before retransmit: wait for any frames still
+                    # in SoftSerial to finish, then flush stale ACK/NACK bytes.
+                    sleep(inter_frame_s)
+                    self._ser.reset_input_buffer()
+                first_try = False
+
                 print(
                     f"[Serial] Ráfaga {i + 1}/{total_bursts}: "
                     f"enviando {len(burst_to_send)} trama(s) "
@@ -127,18 +135,23 @@ class PuertoSerialEmisor:
 
                 # NACK: retransmit from the failed sequence number.
                 nack_seq = resp["sequence"]
-                burst_min_seq = self._seq_of(burst[0])
-                burst_max_seq = self._seq_of(burst[-1])
+                burst_seqs = {self._seq_of(f) for f in burst}
 
-                if nack_seq > burst_max_seq:
-                    # NACK references a future burst — current burst was already received OK.
+                if nack_seq not in burst_seqs:
+                    # NACK references a seq outside this burst — burst was received OK.
                     print(
                         f"[Serial] NACK (seq={nack_seq}) confirma ráfaga {i + 1} recibida — avanzando."
                     )
                     break
 
                 print(f"[Serial] NACK (seq={nack_seq}) — retransmitiendo desde seq {nack_seq}...")
-                burst_to_send = [f for f in burst if self._seq_of(f) >= nack_seq]
+                burst_to_send = []
+                found = False
+                for f in burst:
+                    if self._seq_of(f) == nack_seq:
+                        found = True
+                    if found:
+                        burst_to_send.append(f)
                 if not burst_to_send:
                     burst_to_send = list(burst)
 
