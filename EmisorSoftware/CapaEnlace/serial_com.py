@@ -95,7 +95,15 @@ class PuertoSerialEmisor:
                 sleep(inter_frame_s)  # let Nano finish forwarding last burst before new frames arrive
             self._ser.reset_input_buffer()
 
+            first_try = True
             while True:
+                if not first_try:
+                    # Drain Nano pipeline before retransmit: wait for any frames still
+                    # in SoftSerial to finish, then flush stale ACK/NACK bytes.
+                    sleep(inter_frame_s)
+                    self._ser.reset_input_buffer()
+                first_try = False
+
                 print(
                     f"[Serial] Ráfaga {i + 1}/{total_bursts}: "
                     f"enviando {len(burst_to_send)} trama(s) "
