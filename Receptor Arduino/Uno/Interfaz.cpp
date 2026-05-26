@@ -7,7 +7,6 @@
 void Interfaz::establecerConexion() {
   NanoSerial.end();
   NanoSerial.begin(controlador->config.velocidad);
-  while (!NanoSerial);
 
   hammingActivo = controlador->config.hamming;
 }
@@ -15,6 +14,9 @@ void Interfaz::establecerConexion() {
 void Interfaz::enviarTrama(uint8_t *buffer) {
   for (uint8_t i = 0; i < controlador->response_size; i++) {
     uint16_t chain = generarHamming(buffer[i]);
+
+    delay(2);
+
     NanoSerial.write((uint8_t*)&chain, 2);
   }
 }

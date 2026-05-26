@@ -1,16 +1,13 @@
 #pragma once
 
-#include <SoftwareSerial.h>
+#include <AltSoftSerial.h>
 #include <stdint.h>
-
-#define RX 10
-#define TX 11
 
 class ControladorFlujo;
 
 class Interfaz {
 private:
-  SoftwareSerial UnoSerial = SoftwareSerial(RX, TX);
+  AltSoftSerial UnoSerial = AltSoftSerial();
 
 public:
   ControladorFlujo *controlador = nullptr;

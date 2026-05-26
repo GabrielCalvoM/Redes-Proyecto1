@@ -85,13 +85,8 @@ class AdministradorTramas:
             self.constructor.build_data_frame(sequence, chunk)
             for sequence, chunk in enumerate(chunks)
         ]
-
-        burst_size = max(1, self.session.window_size)
-        bursts = [
-            data_frames[index : index + burst_size]
-            for index in range(0, len(data_frames), burst_size)
-        ]
-        return connection_frame, bursts
+        
+        return connection_frame, data_frames
 
     def _normalize_packets(self, packets: Iterable[bytes]) -> list[bytes]:
         normalized: list[bytes] = []

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from math import ceil
 from time import sleep
 from typing import TYPE_CHECKING
 
@@ -50,14 +51,14 @@ class PuertoSerialEmisor:
         frame_bytes = payload_size + 7                      # header(4) + payload + checksum(2) + trailer(1)
         usb_recv_s = (frame_bytes * 10) / speed_bps         # Nano reads frame from USB
         softserial_bytes = frame_bytes * 2                  # Nano sends 2 bytes per original byte
-        transit_s = (softserial_bytes * 10) / speed_bps     # Nano forwards via SoftwareSerial
+        transit_s = (softserial_bytes * 20) / speed_bps     # Nano forwards via SoftwareSerial
         return usb_recv_s + transit_s + 0.060               # +60 ms for loop overhead
 
     def enviar_transferencia(
         self,
         admin: AdministradorTramas,
         connection_frame: bytes,
-        bursts: list[list[bytes]],
+        data_frames: list[bytes],
     ) -> None:
         inter_frame_s = self._inter_frame_delay(
             admin.session.payload_size, admin.session.speed_bps
@@ -81,15 +82,17 @@ class PuertoSerialEmisor:
             raise RuntimeError(f"Respuesta inválida al handshake: {exc}") from exc
         if resp["type"] != "ack":
             raise RuntimeError(f"Se esperaba ACK, se recibió: {resp['type']}")
-        print(f"[Serial] Handshake confirmado. Iniciando transferencia de {len(bursts)} ráfaga(s)...")
+        total_data_frames = len(data_frames)
+        print(f"[Serial] Handshake confirmado. Iniciando transferencia de {total_data_frames} trama(s) ...")
 
         sleep(0.5)
         self._cambiar_baud(admin.session.speed_bps)
 
         # --- Sliding-window Go-Back-N (half-duplex: send full burst, then wait) ---
-        total_bursts = len(bursts)
-        for i, burst in enumerate(bursts):
-            burst_to_send = list(burst)
+        window_size = admin.session.window_size
+        i = 0
+        while i < total_data_frames:
+            burst_to_send = data_frames[i:i+window_size]
 
             if i > 0:
                 sleep(inter_frame_s)  # let Nano finish forwarding last burst before new frames arrive
@@ -105,7 +108,7 @@ class PuertoSerialEmisor:
                 first_try = False
 
                 print(
-                    f"[Serial] Ráfaga {i + 1}/{total_bursts}: "
+                    f"[Serial] Tramas enviadas {i}/{total_data_frames}: "
                     f"enviando {len(burst_to_send)} trama(s) "
                     f"(seq {self._seq_of(burst_to_send[0])}–{self._seq_of(burst_to_send[-1])})"
                 )
@@ -119,40 +122,24 @@ class PuertoSerialEmisor:
                 raw = self._leer_respuesta()
                 if raw is None:
                     print("[Serial] Timeout — retransmitiendo ráfaga completa...")
-                    burst_to_send = list(burst)
                     continue
 
                 try:
                     resp = admin.parse_control_frame(raw)
                 except ValueError as exc:
                     print(f"[Serial] Respuesta inválida: {exc} — retransmitiendo...")
-                    burst_to_send = list(burst)
                     continue
 
                 if resp["type"] == "ack":
-                    print(f"[Serial] ACK ráfaga {i + 1} (seq={resp['sequence']})")
+                    print(f"[Serial] ACK (seq={resp['sequence']})")
+                    i = resp['sequence'] + 1
                     break
 
                 # NACK: retransmit from the failed sequence number.
                 nack_seq = resp["sequence"]
-                burst_seqs = {self._seq_of(f) for f in burst}
-
-                if nack_seq not in burst_seqs:
-                    # NACK references a seq outside this burst — burst was received OK.
-                    print(
-                        f"[Serial] NACK (seq={nack_seq}) confirma ráfaga {i + 1} recibida — avanzando."
-                    )
-                    break
 
                 print(f"[Serial] NACK (seq={nack_seq}) — retransmitiendo desde seq {nack_seq}...")
-                burst_to_send = []
-                found = False
-                for f in burst:
-                    if self._seq_of(f) == nack_seq:
-                        found = True
-                    if found:
-                        burst_to_send.append(f)
-                if not burst_to_send:
-                    burst_to_send = list(burst)
+                i = nack_seq
+                break
 
         print("[Serial] Transferencia completada.")

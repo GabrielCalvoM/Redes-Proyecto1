@@ -22,7 +22,7 @@ from CapaEnlace.serial_com import PuertoSerialReceptor
 
 
 def main():
-    puerto_serial = sys.argv[1] if len(sys.argv) > 1 else "COM4"
+    puerto_serial = sys.argv[1] if len(sys.argv) > 1 else "COM8"
 
     interfaz = InterfazRedEnlace()
     admin = AdministradorTramas()

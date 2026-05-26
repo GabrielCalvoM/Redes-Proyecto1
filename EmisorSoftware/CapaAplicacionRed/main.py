@@ -17,7 +17,7 @@ from CapaEnlace.serial_com import PuertoSerialEmisor
 
 
 def main():
-    puerto_serial = sys.argv[1] if len(sys.argv) > 1 else "COM6"
+    puerto_serial = sys.argv[1] if len(sys.argv) > 1 else "COM7"
 
     # --- Capa de Aplicación / Red ---
     params = obtener_parametros()
@@ -54,13 +54,13 @@ def main():
     packets = []
     while len(interfaz) > 0:
         packets.append(interfaz.dequeue())
-    connection_frame, bursts = administrador.prepare_bursts_from_packets(packets)
+    connection_frame, data_frames = administrador.prepare_bursts_from_packets(packets)
 
     # --- Capa Física (serial hacia Arduino) ---
     puerto = PuertoSerialEmisor(puerto_serial, timeout=120.0)
     try:
         puerto.conectar()
-        puerto.enviar_transferencia(administrador, connection_frame, bursts)
+        puerto.enviar_transferencia(administrador, connection_frame, data_frames)
     finally:
         puerto.cerrar()
 
